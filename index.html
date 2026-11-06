@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor Bank Soal</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--tx:#0f172a;--mut:#64748b;--bd:#e2e8f0;--pri:#0d47a1;--ok:#16a34a;--bad:#dc2626}
+@media (prefers-color-scheme:dark){:root{--bg:#0f172a;--card:#1e293b;--tx:#e2e8f0;--mut:#94a3b8;--bd:#334155;--pri:#60a5fa}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--tx);font-size:14px}
+header{background:var(--pri);color:#fff;padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;position:sticky;top:0;z-index:5}
+header h1{font-size:16px;margin:0 auto 0 0}
+input,select,textarea,button{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:7px 10px}
+textarea{width:100%;resize:vertical;min-height:70px}
+input[type=text],input[type=password]{width:100%}
+button{cursor:pointer;background:var(--pri);color:#fff;border:0;font-weight:600}
+button.sec{background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+button.bad{background:var(--bad)}
+button:disabled{opacity:.5}
+header select,header input{max-width:200px}
+#login{max-width:340px;margin:12vh auto;background:var(--card);padding:22px;border-radius:14px;border:1px solid var(--bd);display:grid;gap:10px}
+#app{display:none;grid-template-columns:minmax(260px,340px) 1fr;gap:12px;padding:12px;align-items:start}
+@media(max-width:800px){#app{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px}
+#list{max-height:calc(100vh - 90px);overflow:auto}
+.item{padding:9px 12px;border-bottom:1px solid var(--bd);cursor:pointer;display:flex;gap:8px}
+.item:hover{background:var(--bg)}
+.item.on{background:var(--pri);color:#fff}
+.item b{min-width:26px}
+.item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.item small{opacity:.7}
+#editor{padding:14px;display:none}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+@media(max-width:600px){.row{grid-template-columns:1fr}}
+label{display:block;font-size:12px;color:var(--mut);margin:8px 0 3px;font-weight:600}
+.opt{border:1px solid var(--bd);border-radius:10px;padding:8px;margin-bottom:8px}
+.opt .h{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.opt .h b{background:var(--pri);color:#fff;border-radius:6px;padding:2px 8px}
+.imgbox{display:flex;gap:6px;align-items:center;margin-top:6px}
+.imgbox input{flex:1}
+.prev{max-width:220px;max-height:140px;display:block;margin-top:6px;border-radius:6px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+#msg{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);padding:9px 16px;border-radius:10px;color:#fff;display:none;z-index:9}
+.empty{padding:30px;text-align:center;color:var(--mut)}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <h2 style="margin:0">Editor Bank Soal</h2>
+  <input type="password" id="pass" placeholder="Password admin" autofocus>
+  <button id="btnLogin">Masuk</button>
+  <div id="loginErr" style="color:var(--bad)"></div>
+</div>
+
+<header id="top" style="display:none">
+  <h1>📝 Editor Bank Soal</h1>
+  <select id="fMapel"></select>
+  <input id="fCari" placeholder="Cari teks soal…">
+  <button class="sec" id="btnReload">↻ Muat ulang</button>
+  <button id="btnNew">+ Soal baru</button>
+</header>
+
+<div id="app">
+  <div class="card" id="list"></div>
+  <div class="card" id="editor"></div>
+</div>
+<div id="msg"></div>
+
+<script>
+const GAS = 'https://script.google.com/macros/s/AKfycbyaBLYjzMf7eXARTND6F-7vwQcKO79OeNP7lyX-Zw0MAGhYjoEKMPBMygzyGEaq1TOO/exec';
+const HURUF = 'ABCDEFGHIJKL'.split('');
+const NC = 31, I_KUNCI = 30;
+let pass = '', ROWS = [], cur = null, shownOpt = 4;
+
+const $ = id => document.getElementById(id);
+const el = (t, c, h) => { const e = document.createElement(t); if (c) e.className = c; if (h !== undefined) e.textContent = h; return e; };
+
+function toast(t, ok = true) {
+  const m = $('msg'); m.textContent = t; m.style.background = ok ? 'var(--ok)' : 'var(--bad)';
+  m.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => m.style.display = 'none', 2800);
+}
+
+async function apiGet(params) {
+  const r = await fetch(GAS + '?' + new URLSearchParams(params));
+  return r.json();
+}
+async function apiPost(body) {
+  const r = await fetch(GAS, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+  return r.json();
+}
+
+/* ---------- login & muat data ---------- */
+$('btnLogin').onclick = async () => {
+  pass = $('pass').value;
+  $('loginErr').textContent = '';
+  const ok = await muat();
+  if (ok) { $('login').style.display = 'none'; $('top').style.display = 'flex'; $('app').style.display = 'grid'; }
+};
+$('pass').onkeydown = e => { if (e.key === 'Enter') $('btnLogin').click(); };
+$('btnReload').onclick = () => muat();
+
+async function muat() {
+  try {
+    const d = await apiGet({ action: 'adminListSoal', pass });
+    if (!d.success) { $('loginErr').textContent = d.message; toast(d.message, false); return false; }
+    ROWS = d.rows;
+    const sel = $('fMapel'), old = sel.value;
+    const kode = [...new Set(ROWS.map(r => r.v[0]))];
+    sel.innerHTML = '';
+    kode.forEach(k => { const o = el('option', '', k + ' — ' + (ROWS.find(r => r.v[0] === k).v[1] || '')); o.value = k; sel.appendChild(o); });
+    if (kode.includes(old)) sel.value = old;
+    cur = null; $('editor').style.display = 'none';
+    renderList();
+    return true;
+  } catch (e) { $('loginErr').textContent = 'Gagal terhubung: ' + e.message; return false; }
+}
+$('fMapel').onchange = () => { cur = null; $('editor').style.display = 'none'; renderList(); };
+$('fCari').oninput = renderList;
+
+/* ---------- daftar soal ---------- */
+function rowsMapel() { return ROWS.filter(r => r.v[0] === $('fMapel').value); }
+
+function renderList() {
+  const box = $('list'); box.innerHTML = '';
+  const q = $('fCari').value.toLowerCase();
+  const all = rowsMapel();
+  if (!all.length) { box.appendChild(el('div', 'empty', 'Belum ada soal.')); return; }
+  all.forEach((r, i) => {
+    if (q && !r.v[4].toLowerCase().includes(q)) return;
+    const it = el('div', 'item' + (cur && cur.row === r.row ? ' on' : ''));
+    it.appendChild(el('b', '', (i + 1) + '.'));
+    it.appendChild(el('span', '', r.v[4] || (r.v[5] ? '[soal bergambar]' : '(kosong)')));
+    it.appendChild(el('small', '', r.v[I_KUNCI] || '?'));
+    it.onclick = () => bukaEditor(r);
+    box.appendChild(it);
+  });
+}
+
+/* ---------- gambar ---------- */
+async function tampilGambar(img, url) {
+  img.style.display = 'none';
+  if (!url) return;
+  try {
+    if (url.indexOf('action=proxyImage') > -1) {
+      const d = await (await fetch(url)).json();
+      if (d.success) { img.src = d.dataUri; img.style.display = 'block'; }
+    } else { img.src = url; img.style.display = 'block'; }
+  } catch (e) {}
+}
+
+function kompres(file) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => {
+      const im = new Image();
+      im.onload = () => {
+        const s = Math.min(1, 1000 / Math.max(im.width, im.height));
+        const c = document.createElement('canvas');
+        c.width = im.width * s; c.height = im.height * s;
+        c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+        res(c.toDataURL('image/jpeg', 0.82).split(',')[1]);
+      };
+      im.onerror = rej; im.src = fr.result;
+    };
+    fr.onerror = rej; fr.readAsDataURL(file);
+  });
+}
+
+function imgField(label, id, val) {
+  const w = el('div');
+  w.appendChild(el('label', '', label));
+  const b = el('div', 'imgbox');
+  const inp = el('input'); inp.type = 'text'; inp.id = id; inp.value = val || ''; inp.placeholder = 'URL gambar (kosongkan bila tidak ada)';
+  const up = el('button', 'sec', '⬆ Upload');
+  const rm = el('button', 'sec', '✕');
+  const fi = el('input'); fi.type = 'file'; fi.accept = 'image/*'; fi.style.display = 'none';
+  const pv = el('img', 'prev'); pv.style.display = 'none';
+  up.onclick = () => fi.click();
+  rm.onclick = () => { inp.value = ''; pv.style.display = 'none'; };
+  fi.onchange = async () => {
+    if (!fi.files[0]) return;
+    up.disabled = true; up.textContent = '…';
+    try {
+      const b64 = await kompres(fi.files[0]);
+      const d = await apiPost({ action: 'uploadGambar', base64: b64, fileName: 'soal_' + Date.now() + '.jpg', mimeType: 'image/jpeg' });
+      if (d.success) { inp.value = d.url; tampilGambar(pv, d.url); toast('Gambar terunggah'); }
+      else toast(d.message, false);
+    } catch (e) { toast('Upload gagal', false); }
+    up.disabled = false; up.textContent = '⬆ Upload'; fi.value = '';
+  };
+  inp.onchange = () => tampilGambar(pv, inp.value.trim());
+  b.append(inp, up, rm, fi); w.append(b, pv);
+  tampilGambar(pv, val);
+  return w;
+}
+
+/* ---------- editor ---------- */
+function bukaEditor(r, baru) {
+  cur = baru ? { row: 0, v: r.v.slice() } : r;
+  const v = cur.v;
+  shownOpt = 4;
+  HURUF.forEach((h, i) => { if (v[6 + 2 * i] || v[7 + 2 * i]) shownOpt = Math.max(shownOpt, i + 1); });
+  renderList();
+
+  const ed = $('editor'); ed.style.display = 'block'; ed.innerHTML = '';
+  const nomor = baru ? 'Soal baru' : 'Soal no. ' + (rowsMapel().findIndex(x => x.row === cur.row) + 1) + ' (baris sheet ' + cur.row + ')';
+  ed.appendChild(el('h3', '', nomor)).style.margin = '0 0 8px';
+
+  const r1 = el('div', 'row');
+  [['Kode mapel', 0], ['Mata pelajaran', 1], ['Password mulai', 2], ['Password selesai', 3]].forEach(([lb, i]) => {
+    const d = el('div'); d.appendChild(el('label', '', lb));
+    const inp = el('input'); inp.type = 'text'; inp.id = 'f' + i; inp.value = v[i]; d.appendChild(inp); r1.appendChild(d);
+  });
+  ed.appendChild(r1);
+  if (!baru) {
+    const l = el('label'); l.style.cssText = 'display:flex;gap:6px;align-items:center;font-weight:400';
+    const cb = el('input'); cb.type = 'checkbox'; cb.id = 'applyAll';
+    l.append(cb, document.createTextNode('Terapkan kode, nama & password ini ke semua soal mapel ini'));
+    ed.appendChild(l);
+  }
+
+  ed.appendChild(el('label', '', 'Soal'));
+  const ta = el('textarea'); ta.id = 'f4'; ta.value = v[4]; ta.rows = 4; ed.appendChild(ta);
+  ed.appendChild(imgField('Gambar soal', 'f5', v[5]));
+
+  ed.appendChild(el('h4', '', 'Pilihan jawaban')).style.margin = '14px 0 6px';
+  const ob = el('div'); ob.id = 'optBox'; ed.appendChild(ob);
+  renderOpts(v);
+  const more = el('button', 'sec', '+ Tambah opsi');
+  more.onclick = () => { simpanKeV(); if (shownOpt < 12) shownOpt++; renderOpts(cur.v); };
+  ed.appendChild(more);
+
+  ed.appendChild(el('label', '', 'Kunci jawaban'));
+  const ks = el('select'); ks.id = 'f30';
+  ['', ...HURUF].forEach(h => { const o = el('option', '', h || '— pilih —'); o.value = h; ks.appendChild(o); });
+  ks.value = (v[I_KUNCI] || '').trim().toUpperCase();
+  ed.appendChild(ks);
+
+  const bar = el('div', 'bar');
+  const sv = el('button', '', '💾 Simpan'); sv.onclick = simpan;
+  bar.appendChild(sv);
+  if (!baru) { const dl = el('button', 'bad', '🗑 Hapus'); dl.onclick = hapus; bar.appendChild(dl); }
+  const cl = el('button', 'sec', 'Batal'); cl.onclick = () => { cur = null; ed.style.display = 'none'; renderList(); };
+  bar.appendChild(cl);
+  ed.appendChild(bar);
+  ed.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderOpts(v) {
+  const ob = $('optBox'); ob.innerHTML = '';
+  for (let i = 0; i < shownOpt; i++) {
+    const o = el('div', 'opt');
+    const h = el('div', 'h'); h.appendChild(el('b', '', HURUF[i]));
+    const inp = el('input'); inp.type = 'text'; inp.id = 'f' + (6 + 2 * i); inp.value = v[6 + 2 * i]; inp.placeholder = 'Teks pilihan ' + HURUF[i];
+    h.appendChild(inp); o.appendChild(h);
+    o.appendChild(imgField('Gambar pilihan ' + HURUF[i], 'f' + (7 + 2 * i), v[7 + 2 * i]));
+    ob.appendChild(o);
+  }
+}
+
+function simpanKeV() {           // salin isi form ke cur.v (agar tidak hilang saat render ulang)
+  for (let i = 0; i < NC; i++) { const e = $('f' + i); if (e) cur.v[i] = e.value; }
+}
+
+async function simpan() {
+  simpanKeV();
+  const v = cur.v;
+  if (!v[0].trim()) return toast('Kode mapel wajib diisi', false);
+  if (!v[4].trim() && !v[5].trim()) return toast('Soal atau gambar soal harus diisi', false);
+  if (!v[I_KUNCI]) return toast('Pilih kunci jawaban', false);
+  const baru = cur.row === 0;
+  const body = baru
+    ? { action: 'adminTambahSoal', pass, values: v }
+    : { action: 'adminSaveSoal', pass, row: cur.row, kodeLama: ROWS.find(r => r.row === cur.row).v[0], values: v, applyAll: $('applyAll') && $('applyAll').checked };
+  try {
+    const d = await apiPost(body);
+    if (!d.success) return toast(d.message, false);
+    toast('Tersimpan ✓');
+    const kodeBaru = v[0];
+    await muat();
+    $('fMapel').value = kodeBaru; renderList();
+  } catch (e) { toast('Gagal menyimpan: ' + e.message, false); }
+}
+
+async function hapus() {
+  if (!confirm('Hapus soal ini dari sheet?')) return;
+  const kode = ROWS.find(r => r.row === cur.row).v[0];
+  const d = await apiPost({ action: 'adminHapusSoal', pass, row: cur.row, kodeLama: kode });
+  if (!d.success) return toast(d.message, false);
+  toast('Soal dihapus');
+  await muat(); $('fMapel').value = kode; renderList();
+}
+
+$('btnNew').onclick = () => {
+  const k = $('fMapel').value, ref = ROWS.find(r => r.v[0] === k);
+  const v = new Array(NC).fill('');
+  if (ref) { v[0] = ref.v[0]; v[1] = ref.v[1]; v[2] = ref.v[2]; v[3] = ref.v[3]; }
+  bukaEditor({ v }, true);
+};
+</script>
+</body>
+</html>
