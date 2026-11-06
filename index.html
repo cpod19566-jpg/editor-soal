@@ -4,69 +4,249 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Editor Bank Soal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f1f5f9;--card:#fff;--tx:#0f172a;--mut:#64748b;--bd:#e2e8f0;--pri:#0d47a1;--ok:#16a34a;--bad:#dc2626}
-@media (prefers-color-scheme:dark){:root{--bg:#0f172a;--card:#1e293b;--tx:#e2e8f0;--mut:#94a3b8;--bd:#334155;--pri:#60a5fa}}
+:root{
+  --bg:#f3f4f7;--card:#ffffff;--tx:#1b2333;--mut:#6b7385;--bd:#e3e6ec;--soft:#f7f8fa;
+  --pri:#16233f;--pri2:#24365e;--gold:#b08d57;--gold2:#d6b98a;--goldbg:#f6efe2;--ok:#2f7d5b;--bad:#b4403a;
+  --orb1:rgba(176,141,87,.20);--orb2:rgba(36,54,94,.16);
+  --sh:0 1px 2px rgba(22,35,63,.06),0 8px 24px -12px rgba(22,35,63,.18);
+  --sh-lg:0 2px 4px rgba(22,35,63,.05),0 30px 60px -24px rgba(22,35,63,.32);
+  --ease:cubic-bezier(.22,.8,.24,1);
+  --serif:"Cormorant Garamond","Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --sans:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0d1220;--card:#151c2e;--tx:#e6e9f0;--mut:#8f99b0;--bd:#252f47;--soft:#1a2339;
+  --pri:#0a0f1c;--pri2:#2a3c66;--gold:#d2ae75;--gold2:#ecd2a3;--goldbg:#2a2418;--ok:#4fb386;--bad:#e0716a;
+  --orb1:rgba(210,174,117,.10);--orb2:rgba(60,90,160,.18);
+  --sh:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+  --sh-lg:0 2px 4px rgba(0,0,0,.4),0 30px 60px -24px rgba(0,0,0,.8);}}
+
 *{box-sizing:border-box}
-body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--tx);font-size:14px}
-header{background:var(--pri);color:#fff;padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;position:sticky;top:0;z-index:5}
-header h1{font-size:16px;margin:0 auto 0 0}
-input,select,textarea,button{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:7px 10px}
-textarea{width:100%;resize:vertical;min-height:70px}
+html,body{height:auto}
+body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--tx);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
+::selection{background:color-mix(in srgb,var(--gold) 35%,transparent)}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:600;letter-spacing:.005em;font-variant-numeric:lining-nums}
+
+/* latar: dua cahaya lembut yang bergeser perlahan */
+body::before,body::after{content:"";position:fixed;z-index:-1;pointer-events:none;border-radius:50%;filter:blur(70px);width:52vmax;height:52vmax}
+body::before{background:var(--orb1);top:-22vmax;right:-14vmax;animation:drift 32s ease-in-out infinite alternate}
+body::after{background:var(--orb2);bottom:-26vmax;left:-18vmax;animation:drift 38s ease-in-out infinite alternate-reverse}
+
+.ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ---------- form dasar ---------- */
+input,select,textarea,button{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:9px 12px;
+  transition:border-color .25s var(--ease),box-shadow .25s var(--ease),background-color .25s var(--ease),transform .2s var(--ease),filter .25s}
+input:hover,select:hover,textarea:hover{border-color:color-mix(in srgb,var(--gold) 45%,var(--bd))}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 22%,transparent)}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+textarea{width:100%;resize:vertical;min-height:96px;line-height:1.65}
 input[type=text],input[type=password]{width:100%}
-button{cursor:pointer;background:var(--pri);color:#fff;border:0;font-weight:600}
-button.sec{background:var(--card);color:var(--tx);border:1px solid var(--bd)}
-button.bad{background:var(--bad)}
-button:disabled{opacity:.5}
-header select,header input{max-width:200px}
-#login{max-width:340px;margin:12vh auto;background:var(--card);padding:22px;border-radius:14px;border:1px solid var(--bd);display:grid;gap:10px}
-#app{display:none;grid-template-columns:minmax(260px,340px) 1fr;gap:12px;padding:12px;align-items:start}
-@media(max-width:800px){#app{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:12px}
-#list{max-height:calc(100vh - 90px);overflow:auto}
-.item{padding:9px 12px;border-bottom:1px solid var(--bd);cursor:pointer;display:flex;gap:8px}
-.item:hover{background:var(--bg)}
-.item.on{background:var(--pri);color:#fff}
-.item b{min-width:26px}
+select{appearance:none;-webkit-appearance:none;padding-right:34px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a93a8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:13px}
+
+button{cursor:pointer;background:var(--pri);color:#fff;border:0;font-weight:600;padding:9px 18px;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden}
+button:hover{background:var(--pri2);transform:translateY(-1px)}
+button:active{transform:translateY(0) scale(.98)}
+button.sec{background:var(--card);color:var(--tx);border:1px solid var(--bd);font-weight:500}
+button.sec:hover{background:var(--soft);border-color:var(--gold)}
+button.bad{background:transparent;color:var(--bad);border:1px solid color-mix(in srgb,var(--bad) 40%,transparent)}
+button.bad:hover{background:var(--bad);color:#fff;border-color:var(--bad)}
+button:disabled{opacity:.55;cursor:default;transform:none}
+
+/* kilau emas pada tombol utama saat disorot */
+#btnLogin::after,#btnNew::after,.bar button:first-child::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.38) 50%,transparent 70%);transform:translateX(-130%)}
+#btnLogin:hover::after,#btnNew:hover::after,.bar button:first-child:hover::after{transform:translateX(130%);transition:transform .8s var(--ease)}
+
+input[type=checkbox]{appearance:none;-webkit-appearance:none;width:19px;height:19px;padding:0;border-radius:6px;border:1.5px solid var(--bd);display:inline-grid;place-items:center;flex:none;cursor:pointer;background:var(--card)}
+input[type=checkbox]::after{content:"";width:5px;height:9px;border:solid var(--pri);border-width:0 2px 2px 0;transform:rotate(45deg) scale(0);margin-top:-2px;transition:transform .25s var(--ease)}
+input[type=checkbox]:checked{background:var(--gold);border-color:var(--gold)}
+input[type=checkbox]:checked::after{transform:rotate(45deg) scale(1)}
+
+/* ---------- login ---------- */
+#login{width:min(400px,calc(100% - 32px));margin:14vh auto 0;background:var(--card);padding:42px 34px 30px;border-radius:22px;border:1px solid var(--bd);
+  box-shadow:var(--sh-lg);display:grid;gap:14px;position:relative;overflow:hidden;animation:loginIn .9s var(--ease) backwards}
+#login::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold2),var(--gold));transform-origin:left;animation:garis 1.2s .35s var(--ease) backwards}
+#login>*{animation:naik .75s var(--ease) backwards}
+#login>:nth-child(1){animation-delay:.25s}
+#login>:nth-child(2){animation-delay:.33s}
+#login>:nth-child(3){animation-delay:.41s}
+#login>:nth-child(4){animation-delay:.49s}
+#login>:nth-child(5){animation-delay:.57s}
+#login.out{animation:keluar .45s var(--ease) forwards;pointer-events:none}
+#login.shake{animation:shake .5s var(--ease)}
+.emblem{width:60px;height:60px;border-radius:50%;margin:0 auto 4px;display:grid;place-items:center;color:var(--gold2);
+  background:linear-gradient(145deg,var(--pri2),var(--pri));border:1.5px solid var(--gold);
+  box-shadow:0 0 0 6px color-mix(in srgb,var(--gold) 14%,transparent),0 12px 24px -10px rgba(22,35,63,.55)}
+.emblem .ic{width:28px;height:28px;stroke-width:1.5}
+#login h2{margin:0;font-size:34px;line-height:1.1;text-align:center;color:var(--pri)}
+#login .sub{margin:-6px 0 6px;color:var(--mut);text-align:center}
+#login input[type=password]{padding:12px 14px 12px 42px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a93a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='11' width='16' height='10' rx='2'/%3E%3Cpath d='M8 11V7a4 4 0 0 1 8 0v4'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:14px center;background-size:17px}
+#login button{padding:13px 18px;background:linear-gradient(135deg,var(--pri2),var(--pri));letter-spacing:.02em}
+#login button:hover{filter:brightness(1.12)}
+#loginErr{color:var(--bad);min-height:1.2em;font-size:13px;text-align:center}
+@media (prefers-color-scheme:dark){#login h2{color:var(--tx)}#login button{border:1px solid rgba(255,255,255,.1)}}
+
+/* ---------- header ---------- */
+header{background:linear-gradient(180deg,color-mix(in srgb,var(--pri) 90%,#fff),var(--pri));color:#fff;padding:12px 24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;position:sticky;top:0;z-index:5;
+  box-shadow:0 14px 30px -20px rgba(0,0,0,.55)}
+header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold) 18%,var(--gold2) 50%,var(--gold) 82%,transparent)}
+header h1{font-size:23px;margin:0 auto 0 0;color:#fff;font-weight:600;display:flex;align-items:center;gap:12px;letter-spacing:.01em}
+header h1 .mark{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--gold);color:var(--gold2);background:rgba(255,255,255,.05)}
+header h1 .mark .ic{width:18px;height:18px;stroke-width:1.6}
+header select,header input{max-width:250px;background-color:rgba(255,255,255,.07);color:#fff;border:1px solid rgba(255,255,255,.16)}
+header select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c9cfdd' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")}
+header input{padding-left:38px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c9cfdd' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:13px center;background-size:15px}
+header select:hover,header input:hover{background-color:rgba(255,255,255,.11);border-color:rgba(255,255,255,.3)}
+header select:focus,header input:focus{background-color:rgba(255,255,255,.12);border-color:var(--gold)}
+header select option{color:#1b2333;background:#fff}
+header input::placeholder{color:rgba(255,255,255,.55)}
+header button.sec{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.26)}
+header button.sec:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.45)}
+#btnReload .ic{transition:transform .6s var(--ease)}
+#btnReload:hover .ic{transform:rotate(180deg)}
+header #btnNew{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#16233f}
+header #btnNew:hover{filter:brightness(1.07)}
+header.reveal{animation:headerIn .8s var(--ease) backwards}
+
+/* ---------- tata letak ---------- */
+#app{display:none;grid-template-columns:minmax(280px,360px) 1fr;gap:22px;padding:24px;align-items:start;max-width:1280px;margin:0 auto}
+@media(max-width:800px){#app{grid-template-columns:1fr;padding:14px}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;box-shadow:var(--sh)}
+#app.reveal #list{animation:naik .8s .2s var(--ease) backwards}
+#app.reveal #hint{animation:naik .8s .35s var(--ease) backwards}
+
+/* ---------- daftar soal ---------- */
+#list{max-height:calc(100vh - 112px);overflow:auto;position:sticky;top:78px;padding:8px}
+@media(max-width:800px){#list{position:static;max-height:300px}}
+.item{position:relative;padding:11px 12px 11px 16px;border-radius:11px;cursor:pointer;display:flex;gap:10px;align-items:center;transition:background-color .25s var(--ease)}
+.item+.item{margin-top:2px}
+.item::before{content:"";position:absolute;left:3px;top:50%;height:0;width:3px;border-radius:3px;background:linear-gradient(var(--gold2),var(--gold));transform:translateY(-50%);transition:height .35s var(--ease)}
+.item:hover{background:var(--soft)}
+.item.on{background:var(--goldbg)}
+.item.on::before{height:58%}
+.item.anim{animation:itemIn .5s var(--ease) backwards;animation-delay:calc(var(--i,0)*32ms)}
+.item b{min-width:30px;font-family:var(--serif);font-size:17px;font-variant-numeric:lining-nums;color:var(--mut);font-weight:600;text-align:right;transition:color .25s}
+.item:hover b{color:var(--tx)}
+.item.on b{color:var(--gold)}
 .item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
-.item small{opacity:.7}
-#editor{padding:14px;display:none}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.item small{width:24px;height:24px;border-radius:50%;background:var(--pri);color:var(--gold2);display:grid;place-items:center;font-weight:600;font-size:11px;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 50%,transparent);transition:transform .3s var(--ease)}
+.item:hover small,.item.on small{transform:scale(1.1)}
+.item small:empty{display:none}
+.empty{padding:40px 20px;text-align:center;color:var(--mut);font-family:var(--serif);font-size:19px}
+
+/* ---------- panel kosong ---------- */
+#hint{display:grid;place-items:center;text-align:center;padding:90px 30px;min-height:440px;position:sticky;top:78px;background:transparent;border-style:dashed;box-shadow:none;color:var(--mut)}
+#hint .emblem{margin-bottom:14px}
+#hint h3{margin:0 0 6px;font-size:26px;color:var(--pri)}
+#hint p{margin:0 auto;max-width:34ch}
+@media (prefers-color-scheme:dark){#hint h3{color:var(--tx)}}
+#editor[style*="block"]~#hint{display:none}
+@media(max-width:800px){#hint{display:none}}
+
+/* ---------- editor ---------- */
+#editor{padding:30px 34px;display:none}
+#editor.enter{animation:editorIn .6s var(--ease) backwards}
+@media(max-width:600px){#editor{padding:20px 16px}}
+#editor h3{font-size:27px;line-height:1.2;margin:0 0 16px!important;padding-bottom:14px;border-bottom:1px solid var(--bd);color:var(--pri);position:relative}
+#editor h3::after{content:"";position:absolute;left:0;bottom:-1px;width:60px;height:2px;background:linear-gradient(90deg,var(--gold),var(--gold2));transform-origin:left;animation:garis .9s .2s var(--ease) backwards}
+@media (prefers-color-scheme:dark){#editor h3{color:var(--tx)}}
+#editor h4{font-size:21px;margin:24px 0 10px!important}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:8px}
 @media(max-width:600px){.row{grid-template-columns:1fr}}
-label{display:block;font-size:12px;color:var(--mut);margin:8px 0 3px;font-weight:600}
-.opt{border:1px solid var(--bd);border-radius:10px;padding:8px;margin-bottom:8px}
-.opt .h{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.opt .h b{background:var(--pri);color:#fff;border-radius:6px;padding:2px 8px}
+label{display:block;font-size:12.5px;color:var(--mut);margin:12px 0 6px;font-weight:600;letter-spacing:.02em}
+.opt{border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px;background:var(--soft);
+  transition:border-color .35s var(--ease),background-color .35s var(--ease),box-shadow .35s var(--ease)}
+.opt:focus-within{border-color:color-mix(in srgb,var(--gold) 55%,var(--bd));box-shadow:0 10px 24px -16px rgba(22,35,63,.4)}
+.opt.new{animation:optIn .55s var(--ease) backwards}
+.opt.key{border-color:var(--gold);background:var(--goldbg)}
+.opt .h{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.opt .h b{background:var(--pri);color:var(--gold2);border-radius:50%;width:32px;height:32px;display:grid;place-items:center;flex:none;font-family:var(--serif);font-size:18px;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 45%,transparent);transition:background-color .35s,color .35s}
+.opt.key .h b{background:var(--gold);color:var(--pri);animation:pop .5s var(--ease)}
+.opt .h input{background:var(--card)}
 .imgbox{display:flex;gap:6px;align-items:center;margin-top:6px}
-.imgbox input{flex:1}
-.prev{max-width:220px;max-height:140px;display:block;margin-top:6px;border-radius:6px}
-.bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
-#msg{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);padding:9px 16px;border-radius:10px;color:#fff;display:none;z-index:9}
-.empty{padding:30px;text-align:center;color:var(--mut)}
+.imgbox input{flex:1;min-width:0}
+.prev{max-width:240px;max-height:150px;display:block;margin-top:10px;border-radius:10px;border:1px solid var(--bd);box-shadow:var(--sh);animation:fade .6s var(--ease) backwards}
+.bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px;padding-top:20px;border-top:1px solid var(--bd);align-items:center}
+.bar button:first-child{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#16233f;padding:10px 24px}
+.bar button:first-child:hover{filter:brightness(1.07)}
+#f30{min-width:170px}
+
+/* ---------- notifikasi ---------- */
+#msg{position:fixed;bottom:26px;left:50%;transform:translate(-50%,26px);opacity:0;pointer-events:none;display:flex;align-items:center;gap:10px;
+  padding:12px 24px 12px 18px;border-radius:999px;color:#fff;z-index:9;box-shadow:var(--sh-lg);font-weight:500;
+  transition:opacity .35s var(--ease),transform .5s var(--ease)}
+#msg::before{content:"";width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.9);flex:none}
+#msg.show{opacity:1;transform:translate(-50%,0)}
+
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:putar .7s linear infinite}
+
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:8px}::-webkit-scrollbar-thumb:hover{background:var(--gold)}
+
+/* ---------- keyframes ---------- */
+@keyframes putar{to{transform:rotate(360deg)}}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(6vmax,4vmax) scale(1.12)}}
+@keyframes loginIn{from{opacity:0;transform:translateY(28px) scale(.97);filter:blur(8px)}}
+@keyframes keluar{to{opacity:0;transform:translateY(-16px) scale(.97);filter:blur(6px)}}
+@keyframes naik{from{opacity:0;transform:translateY(14px)}}
+@keyframes garis{from{transform:scaleX(0)}}
+@keyframes headerIn{from{transform:translateY(-100%);opacity:0}}
+@keyframes itemIn{from{opacity:0;transform:translateX(-12px)}}
+@keyframes editorIn{from{opacity:0;transform:translateY(16px)}}
+@keyframes optIn{from{opacity:0;transform:translateY(12px) scale(.985)}}
+@keyframes pop{0%{transform:scale(.7)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes fade{from{opacity:0}}
+@keyframes shake{20%{transform:translateX(-9px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
 </style>
 </head>
 <body>
 
 <div id="login">
-  <h2 style="margin:0">Editor Bank Soal</h2>
+  <div class="emblem"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5 2.5 10 12 15l9.5-5L12 5z"/><path d="M6.5 12.5v4c0 1 2.5 2.5 5.5 2.5s5.5-1.5 5.5-2.5v-4"/><path d="M21.5 10v5"/></svg></div>
+  <h2>Editor Bank Soal</h2>
+  <p class="sub">Masuk untuk mengelola soal ujian.</p>
   <input type="password" id="pass" placeholder="Password admin" autofocus>
   <button id="btnLogin">Masuk</button>
-  <div id="loginErr" style="color:var(--bad)"></div>
+  <div id="loginErr"></div>
 </div>
 
 <header id="top" style="display:none">
-  <h1>📝 Editor Bank Soal</h1>
+  <h1><span class="mark"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5 2.5 10 12 15l9.5-5L12 5z"/><path d="M6.5 12.5v4c0 1 2.5 2.5 5.5 2.5s5.5-1.5 5.5-2.5v-4"/></svg></span>Editor Bank Soal</h1>
   <select id="fMapel"></select>
   <input id="fCari" placeholder="Cari teks soal…">
-  <button class="sec" id="btnReload">↻ Muat ulang</button>
-  <button id="btnNew">+ Soal baru</button>
+  <button class="sec" id="btnReload"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>Muat ulang</button>
+  <button id="btnNew"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Soal baru</button>
 </header>
 
 <div id="app">
   <div class="card" id="list"></div>
   <div class="card" id="editor"></div>
+  <div class="card" id="hint">
+    <div>
+      <div class="emblem"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 11h8M8 15h5"/></svg></div>
+      <h3>Pilih soal untuk disunting</h3>
+      <p>Klik salah satu soal di daftar, atau buat soal baru lewat tombol di bagian atas.</p>
+    </div>
+  </div>
 </div>
-<div id="msg"></div>
+<div id="msg" role="status" aria-live="polite"></div>
 
 <script>
 const GAS = 'https://script.google.com/macros/s/AKfycbyaBLYjzMf7eXARTND6F-7vwQcKO79OeNP7lyX-Zw0MAGhYjoEKMPBMygzyGEaq1TOO/exec';
@@ -77,9 +257,18 @@ let pass = '', ROWS = [], cur = null, shownOpt = 4;
 const $ = id => document.getElementById(id);
 const el = (t, c, h) => { const e = document.createElement(t); if (c) e.className = c; if (h !== undefined) e.textContent = h; return e; };
 
+const IC = {
+  up:    '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4"/><path d="M4 20h16"/></svg>',
+  x:     '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  save:  '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg>',
+  trash: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+  plus:  '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>'
+};
+const btn = (cls, icon, text) => { const b = el('button', cls); b.innerHTML = (icon || '') + text; return b; };
+
 function toast(t, ok = true) {
   const m = $('msg'); m.textContent = t; m.style.background = ok ? 'var(--ok)' : 'var(--bad)';
-  m.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => m.style.display = 'none', 2800);
+  m.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => m.classList.remove('show'), 2800);
 }
 
 async function apiGet(params) {
@@ -93,10 +282,26 @@ async function apiPost(body) {
 
 /* ---------- login & muat data ---------- */
 $('btnLogin').onclick = async () => {
+  const b = $('btnLogin'), lg = $('login');
+  if (b.disabled) return;
   pass = $('pass').value;
   $('loginErr').textContent = '';
+  b.disabled = true; $('pass').disabled = true;
+  b.innerHTML = '<span class="spin"></span>Memuat soal…';
   const ok = await muat();
-  if (ok) { $('login').style.display = 'none'; $('top').style.display = 'flex'; $('app').style.display = 'grid'; }
+  b.disabled = false; $('pass').disabled = false; b.textContent = 'Masuk';
+  if (ok) {
+    lg.classList.add('out');
+    setTimeout(() => {
+      lg.style.display = 'none';
+      $('top').style.display = 'flex'; $('app').style.display = 'grid';
+      $('top').classList.add('reveal'); $('app').classList.add('reveal');
+      renderList(true);
+    }, 420);
+  } else {
+    lg.classList.remove('shake'); void lg.offsetWidth; lg.classList.add('shake');
+    $('pass').focus();
+  }
 };
 $('pass').onkeydown = e => { if (e.key === 'Enter') $('btnLogin').click(); };
 $('btnReload').onclick = () => muat();
@@ -112,30 +317,34 @@ async function muat() {
     kode.forEach(k => { const o = el('option', '', k + ' — ' + (ROWS.find(r => r.v[0] === k).v[1] || '')); o.value = k; sel.appendChild(o); });
     if (kode.includes(old)) sel.value = old;
     cur = null; $('editor').style.display = 'none';
-    renderList();
+    renderList(true);
     return true;
   } catch (e) { $('loginErr').textContent = 'Gagal terhubung: ' + e.message; return false; }
 }
-$('fMapel').onchange = () => { cur = null; $('editor').style.display = 'none'; renderList(); };
-$('fCari').oninput = renderList;
+$('fMapel').onchange = () => { cur = null; $('editor').style.display = 'none'; renderList(true); };
+$('fCari').oninput = () => renderList();
 
 /* ---------- daftar soal ---------- */
 function rowsMapel() { return ROWS.filter(r => r.v[0] === $('fMapel').value); }
 
-function renderList() {
+function renderList(anim) {
   const box = $('list'); box.innerHTML = '';
   const q = $('fCari').value.toLowerCase();
   const all = rowsMapel();
   if (!all.length) { box.appendChild(el('div', 'empty', 'Belum ada soal.')); return; }
+  let n = 0;
   all.forEach((r, i) => {
     if (q && !r.v[4].toLowerCase().includes(q)) return;
-    const it = el('div', 'item' + (cur && cur.row === r.row ? ' on' : ''));
+    const it = el('div', 'item' + (cur && cur.row === r.row ? ' on' : '') + (anim ? ' anim' : ''));
+    if (anim) it.style.setProperty('--i', Math.min(n, 14));
+    n++;
     it.appendChild(el('b', '', (i + 1) + '.'));
     it.appendChild(el('span', '', r.v[4] || (r.v[5] ? '[soal bergambar]' : '(kosong)')));
     it.appendChild(el('small', '', r.v[I_KUNCI] || '?'));
     it.onclick = () => bukaEditor(r);
     box.appendChild(it);
   });
+  if (!n) box.appendChild(el('div', 'empty', 'Tidak ada soal yang cocok.'));
 }
 
 /* ---------- gambar ---------- */
@@ -173,8 +382,9 @@ function imgField(label, id, val) {
   w.appendChild(el('label', '', label));
   const b = el('div', 'imgbox');
   const inp = el('input'); inp.type = 'text'; inp.id = id; inp.value = val || ''; inp.placeholder = 'URL gambar (kosongkan bila tidak ada)';
-  const up = el('button', 'sec', '⬆ Upload');
-  const rm = el('button', 'sec', '✕');
+  const UP = IC.up + 'Upload';
+  const up = btn('sec', '', UP);
+  const rm = btn('sec', '', IC.x); rm.title = 'Hapus gambar'; rm.setAttribute('aria-label', 'Hapus gambar');
   const fi = el('input'); fi.type = 'file'; fi.accept = 'image/*'; fi.style.display = 'none';
   const pv = el('img', 'prev'); pv.style.display = 'none';
   up.onclick = () => fi.click();
@@ -188,7 +398,7 @@ function imgField(label, id, val) {
       if (d.success) { inp.value = d.url; tampilGambar(pv, d.url); toast('Gambar terunggah'); }
       else toast(d.message, false);
     } catch (e) { toast('Upload gagal', false); }
-    up.disabled = false; up.textContent = '⬆ Upload'; fi.value = '';
+    up.disabled = false; up.innerHTML = UP; fi.value = '';
   };
   inp.onchange = () => tampilGambar(pv, inp.value.trim());
   b.append(inp, up, rm, fi); w.append(b, pv);
@@ -205,6 +415,7 @@ function bukaEditor(r, baru) {
   renderList();
 
   const ed = $('editor'); ed.style.display = 'block'; ed.innerHTML = '';
+  ed.classList.remove('enter'); void ed.offsetWidth; ed.classList.add('enter');
   const nomor = baru ? 'Soal baru' : 'Soal no. ' + (rowsMapel().findIndex(x => x.row === cur.row) + 1) + ' (baris sheet ' + cur.row + ')';
   ed.appendChild(el('h3', '', nomor)).style.margin = '0 0 8px';
 
@@ -215,7 +426,7 @@ function bukaEditor(r, baru) {
   });
   ed.appendChild(r1);
   if (!baru) {
-    const l = el('label'); l.style.cssText = 'display:flex;gap:6px;align-items:center;font-weight:400';
+    const l = el('label'); l.style.cssText = 'display:flex;gap:10px;align-items:center;font-weight:400;font-size:13px;cursor:pointer';
     const cb = el('input'); cb.type = 'checkbox'; cb.id = 'applyAll';
     l.append(cb, document.createTextNode('Terapkan kode, nama & password ini ke semua soal mapel ini'));
     ed.appendChild(l);
@@ -228,30 +439,38 @@ function bukaEditor(r, baru) {
   ed.appendChild(el('h4', '', 'Pilihan jawaban')).style.margin = '14px 0 6px';
   const ob = el('div'); ob.id = 'optBox'; ed.appendChild(ob);
   renderOpts(v);
-  const more = el('button', 'sec', '+ Tambah opsi');
-  more.onclick = () => { simpanKeV(); if (shownOpt < 12) shownOpt++; renderOpts(cur.v); };
+  const more = btn('sec', IC.plus, 'Tambah opsi');
+  more.onclick = () => {
+    const prev = shownOpt;
+    simpanKeV(); if (shownOpt < 12) shownOpt++;
+    renderOpts(cur.v, prev);
+    const last = $('optBox').lastElementChild;
+    if (last && shownOpt > prev) last.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
   ed.appendChild(more);
 
   ed.appendChild(el('label', '', 'Kunci jawaban'));
   const ks = el('select'); ks.id = 'f30';
   ['', ...HURUF].forEach(h => { const o = el('option', '', h || '— pilih —'); o.value = h; ks.appendChild(o); });
   ks.value = (v[I_KUNCI] || '').trim().toUpperCase();
+  ks.onchange = () => document.querySelectorAll('#optBox .opt').forEach((o, i) => o.classList.toggle('key', HURUF[i] === ks.value));
   ed.appendChild(ks);
 
   const bar = el('div', 'bar');
-  const sv = el('button', '', '💾 Simpan'); sv.onclick = simpan;
+  const sv = btn('', IC.save, 'Simpan'); sv.onclick = simpan;
   bar.appendChild(sv);
-  if (!baru) { const dl = el('button', 'bad', '🗑 Hapus'); dl.onclick = hapus; bar.appendChild(dl); }
-  const cl = el('button', 'sec', 'Batal'); cl.onclick = () => { cur = null; ed.style.display = 'none'; renderList(); };
+  if (!baru) { const dl = btn('bad', IC.trash, 'Hapus'); dl.onclick = hapus; bar.appendChild(dl); }
+  const cl = btn('sec', '', 'Batal'); cl.onclick = () => { cur = null; ed.style.display = 'none'; renderList(); };
   bar.appendChild(cl);
   ed.appendChild(bar);
   ed.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function renderOpts(v) {
+function renderOpts(v, animFrom = Infinity) {
   const ob = $('optBox'); ob.innerHTML = '';
+  const kunci = (v[I_KUNCI] || '').trim().toUpperCase();
   for (let i = 0; i < shownOpt; i++) {
-    const o = el('div', 'opt');
+    const o = el('div', 'opt' + (i >= animFrom ? ' new' : '') + (HURUF[i] === kunci ? ' key' : ''));
     const h = el('div', 'h'); h.appendChild(el('b', '', HURUF[i]));
     const inp = el('input'); inp.type = 'text'; inp.id = 'f' + (6 + 2 * i); inp.value = v[6 + 2 * i]; inp.placeholder = 'Teks pilihan ' + HURUF[i];
     h.appendChild(inp); o.appendChild(h);
@@ -280,7 +499,7 @@ async function simpan() {
     toast('Tersimpan ✓');
     const kodeBaru = v[0];
     await muat();
-    $('fMapel').value = kodeBaru; renderList();
+    $('fMapel').value = kodeBaru; renderList(true);
   } catch (e) { toast('Gagal menyimpan: ' + e.message, false); }
 }
 
@@ -290,7 +509,7 @@ async function hapus() {
   const d = await apiPost({ action: 'adminHapusSoal', pass, row: cur.row, kodeLama: kode });
   if (!d.success) return toast(d.message, false);
   toast('Soal dihapus');
-  await muat(); $('fMapel').value = kode; renderList();
+  await muat(); $('fMapel').value = kode; renderList(true);
 }
 
 $('btnNew').onclick = () => {
